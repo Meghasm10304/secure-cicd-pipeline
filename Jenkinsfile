@@ -2,54 +2,63 @@ pipeline {
     agent any
 
     environment {
-        // Update with YOUR Docker Hub username
         IMAGE_NAME = 'meghasm10304/secure-cicd-pipeline'
+        // Ensure you have 'docker-hub-creds' saved in Jenkins Credentials
+        DOCKER_CREDS = credentials('docker-hub-creds') 
     }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                echo '✅ Source code retrieved from GitHub'
+                echo '✅ Source code retrieved'
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                sh 'npm install'
+                sh 'npm test'
+                echo '🧪 Unit tests passed'
             }
         }
 
         stage('Build Image') {
             steps {
                 sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
-                echo '🐳 Docker image built successfully'
+                sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
+                echo '🐳 Docker image built'
             }
         }
 
         stage('Security Scan') {
             steps {
-                // Fails pipeline on HIGH/CRITICAL vulnerabilities
                 sh "trivy image --severity HIGH,CRITICAL --exit-code 1 ${IMAGE_NAME}:${BUILD_NUMBER}"
-                echo '🛡️ Security scan passed - No critical vulnerabilities'
+                echo '🛡️ Security scan passed'
+            }
+        }
+
+        stage('Push to Registry') {
+            steps {
+                sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
+                sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+                sh "docker push ${IMAGE_NAME}:latest"
+                echo '📦 Image pushed to Docker Hub'
             }
         }
 
         stage('Deploy') {
             steps {
-                script {
-                    // Stop previous container if exists
-                    sh "docker stop zenflow-app || true"
-                    sh "docker rm zenflow-app || true"
-                    
-                    // Deploy new version
-                    sh "docker run -d --name zenflow-app -p 8080:80 ${IMAGE_NAME}:${BUILD_NUMBER}"
-                    echo '🚀 Application deployed at http://localhost:8080'
-                }
+                sh "docker stop zenflow-app || true"
+                sh "docker rm zenflow-app || true"
+                sh "docker run -d --name zenflow-app -p 8080:80 ${IMAGE_NAME}:${BUILD_NUMBER}"
+                echo '🚀 Deployed at http://localhost:8080'
             }
         }
     }
 
     post {
-        success {
-            echo '✅ Secure CI/CD Pipeline completed successfully!'
-        }
-        failure {
-            echo '❌ Pipeline failed. Check security scan or build logs.'
-        }
+        success { echo '✅ Pipeline Success' }
+        failure { echo '❌ Pipeline Failed' }
     }
 }
