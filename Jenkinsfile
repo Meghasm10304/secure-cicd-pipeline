@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'ec2-agent' }
 
     environment {
         IMAGE_NAME = 'meghasm10304/secure-cicd-pipeline'
