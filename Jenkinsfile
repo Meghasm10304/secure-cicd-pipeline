@@ -1,14 +1,13 @@
 pipeline {
-    agent any
+    agent none
 
     environment {
         IMAGE_NAME = 'meghasm10304/secure-cicd-pipeline'
-        // Ensure you have 'docker-hub-creds' saved in Jenkins Credentials
-        DOCKER_CREDS = credentials('docker-hub-creds') 
     }
 
     stages {
         stage('Checkout') {
+            agent any
             steps {
                 checkout scm
                 echo '✅ Source code retrieved'
@@ -16,6 +15,7 @@ pipeline {
         }
 
         stage('Unit Test') {
+            agent any
             steps {
                 sh 'npm install'
                 sh 'npm test'
@@ -24,6 +24,7 @@ pipeline {
         }
 
         stage('Build Image') {
+            agent any
             steps {
                 sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
                 sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
@@ -32,6 +33,7 @@ pipeline {
         }
 
         stage('Security Scan') {
+            agent any
             steps {
                 sh "trivy image --severity HIGH,CRITICAL --exit-code 1 ${IMAGE_NAME}:${BUILD_NUMBER}"
                 echo '🛡️ Security scan passed'
@@ -39,26 +41,37 @@ pipeline {
         }
 
         stage('Push to Registry') {
+            agent any
             steps {
-                sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
-                sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
-                sh "docker push ${IMAGE_NAME}:latest"
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                    sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+                    sh "docker push ${IMAGE_NAME}:latest"
+                }
                 echo '📦 Image pushed to Docker Hub'
             }
         }
 
         stage('Deploy') {
+            agent any
             steps {
                 sh "docker stop zenflow-app || true"
                 sh "docker rm zenflow-app || true"
-                sh "docker run -d --name zenflow-app -p 8080:80 ${IMAGE_NAME}:${BUILD_NUMBER}"
-                echo '🚀 Deployed at http://localhost:8080'
+                sh "docker run -d --name zenflow-app -p 8081:80 ${IMAGE_NAME}:${BUILD_NUMBER}"
+                echo '🚀 Deployed at http://localhost:8081'
             }
         }
     }
 
     post {
-        success { echo '✅ Pipeline Success' }
-        failure { echo '❌ Pipeline Failed' }
+        always {
+            cleanWs()
+        }
+        success {
+            echo '✅ Pipeline Success - Check http://<your-EC2-IP>:8081'
+        }
+        failure {
+            echo '❌ Pipeline Failed'
+        }
     }
 }
