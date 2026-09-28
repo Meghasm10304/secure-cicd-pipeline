@@ -1,5 +1,6 @@
 # Use official lightweight nginx image
 FROM nginx:alpine
+RUN apk update && apk upgrade --no-cache
 
 # Remove default nginx static assets
 RUN rm -rf /usr/share/nginx/html/*
