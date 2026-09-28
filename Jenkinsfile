@@ -1,5 +1,5 @@
-pipeline {
-    agent none
+.pipeline {
+    agent any
 
     environment {
         IMAGE_NAME = 'meghasm10304/secure-cicd-pipeline'
