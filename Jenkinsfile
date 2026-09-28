@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'ec2-agent' }
+    agent any
 
     environment {
         IMAGE_NAME = 'meghasm10304/secure-cicd-pipeline'
@@ -57,8 +57,8 @@ pipeline {
             steps {
                 sh "docker stop zenflow-app || true"
                 sh "docker rm zenflow-app || true"
-                sh "docker run -d --name zenflow-app -p 8081:80 ${IMAGE_NAME}:${BUILD_NUMBER}"
-                echo '🚀 Deployed at http://localhost:8081'
+                sh "docker run -d --name zenflow-app -p 3000:80 ${IMAGE_NAME}:${BUILD_NUMBER}"
+                echo '🚀 Deployed at http://localhost:3000'
             }
         }
     }
@@ -68,7 +68,7 @@ pipeline {
             cleanWs()
         }
         success {
-            echo '✅ Pipeline Success - Check http://<your-EC2-IP>:8081'
+            echo '✅ Pipeline Success - Check http://<your-EC2-IP>:3000'
         }
         failure {
             echo '❌ Pipeline Failed'
