@@ -38,65 +38,7 @@ This project addresses these problems by creating an automated pipeline that:
 
 ## 🏗️ Architecture
 
-```text
-                     ┌─────────────────┐
-                     │    Developer    │
-                     └────────┬────────┘
-                              │
-                              │ Git Push
-                              ▼
-                     ┌─────────────────┐
-                     │     GitHub      │
-                     │ Source Control  │
-                     └────────┬────────┘
-                              │
-                              │ Checkout
-                              ▼
-                     ┌─────────────────┐
-                     │     Jenkins     │
-                     │   CI/CD Server  │
-                     └────────┬────────┘
-                              │
-                    ┌─────────┴─────────┐
-                    │                   │
-                    ▼                   ▼
-             Build Application     Trivy Scan
-                    │                   │
-                    │             Vulnerability
-                    │                Check
-                    │                   │
-                    └─────────┬─────────┘
-                              │
-                              ▼
-                     ┌─────────────────┐
-                     │     Docker      │
-                     │  Build Image    │
-                     └────────┬────────┘
-                              │
-                              ▼
-                     ┌─────────────────┐
-                     │   Docker Hub    │
-                     │ Image Registry  │
-                     └────────┬────────┘
-                              │
-                              │ Pull Image
-                              ▼
-                     ┌─────────────────┐
-                     │    AWS EC2      │
-                     │ Docker Container│
-                     └────────┬────────┘
-                              │
-                              ▼
-                     ┌─────────────────┐
-                     │      Nginx      │
-                     │   Web Server    │
-                     └────────┬────────┘
-                              │
-                              ▼
-                     ┌─────────────────┐
-                     │  Web Application│
-                     └─────────────────┘
-```
+![Secure CI/CD Pipeline Architecture](docs/architecture.png)
 
 ---
 
