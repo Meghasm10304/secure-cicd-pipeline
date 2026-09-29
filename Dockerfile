@@ -1,5 +1,5 @@
 # Use official lightweight nginx image
-FROM nginx:alpine
+FROM nginx:1.20-alpine
 RUN apk update && apk upgrade --no-cache
 
 # Remove default nginx static assets
