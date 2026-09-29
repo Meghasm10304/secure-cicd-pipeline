@@ -3,8 +3,10 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'meghasm10304/secure-cicd-pipeline'
+        // Ensure you have 'docker-hub-creds' saved in Jenkins Credentials
+        DOCKER_CREDS = credentials('docker-hub-creds')
+        TRIVY_CACHE_DIR = '/opt/trivy-cache'
     }
-
     stages {
         stage('Checkout') {
             steps {
@@ -38,17 +40,9 @@ pipeline {
 
         stage('Push to Registry') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'docker-hub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
-                    sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
-                    sh "docker push ${IMAGE_NAME}:latest"
-                }
+                sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
+                sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
+                sh "docker push ${IMAGE_NAME}:latest"
                 echo '📦 Image pushed to Docker Hub'
             }
         }
